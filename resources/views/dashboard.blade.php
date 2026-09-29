@@ -2,12 +2,15 @@
 <html lang="id">
 
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Dashboard POS Toko</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -19,7 +22,6 @@
             color: #333;
         }
 
-        /* HEADER */
         .header {
             background-color: #343a40;
             color: white;
@@ -36,12 +38,10 @@
             color: #ddd;
         }
 
-        /* CONTAINER */
         .container {
             padding: 30px 40px;
         }
 
-        /* CARD */
         .cards {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -69,7 +69,6 @@
             color: #343a40;
         }
 
-        /* SECTION */
         .section {
             background-color: white;
             padding: 25px;
@@ -84,7 +83,43 @@
             color: #343a40;
         }
 
-        /* TABLE */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #bd2130;
+        }
+
         .table-container {
             width: 100%;
             overflow-x: auto;
@@ -111,7 +146,6 @@
             background-color: #f5f5f5;
         }
 
-        /* BADGE */
         .badge {
             display: inline-block;
             background-color: #007bff;
@@ -121,14 +155,12 @@
             font-size: 13px;
         }
 
-        /* FOOTER */
         .footer {
             text-align: center;
             padding: 20px;
             color: #777;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 768px) {
 
             .cards {
@@ -142,39 +174,72 @@
             .header {
                 padding: 20px;
             }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
         }
+
     </style>
 
 </head>
 
 <body>
 
-    <!-- HEADER -->
+    <!-- Header -->
+
     <div class="header">
 
-        <h1>Dashboard POS Toko</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
 
-        <p>
-            Sistem Informasi Penjualan Toko
-        </p>
+            <div>
+
+                <h1>Dashboard POS Toko</h1>
+
+                <p>
+                    Sistem Informasi Penjualan Toko
+                </p>
+
+            </div>
+
+            <form action="{{ route('logout') }}" method="POST">
+
+                @csrf
+
+                <button type="submit"
+                        class="btn btn-danger">
+
+                    Logout
+
+                </button>
+
+            </form>
+
+        </div>
 
     </div>
 
 
     <div class="container">
 
-        <!-- ========================= -->
-        <!-- CARD RINGKASAN -->
-        <!-- ========================= -->
+
+        <!-- Card Ringkasan -->
 
         <div class="cards">
 
             <div class="card">
 
-                <h3>Total Kategori</h3>
+                <h3>
+                    Total Kategori
+                </h3>
 
                 <div class="number">
+
                     {{ $categories->count() }}
+
                 </div>
 
             </div>
@@ -182,10 +247,14 @@
 
             <div class="card">
 
-                <h3>Total Produk</h3>
+                <h3>
+                    Total Produk
+                </h3>
 
                 <div class="number">
+
                     {{ $products->count() }}
+
                 </div>
 
             </div>
@@ -193,10 +262,14 @@
 
             <div class="card">
 
-                <h3>Total Supplier</h3>
+                <h3>
+                    Total Supplier
+                </h3>
 
                 <div class="number">
+
                     {{ $suppliers->count() }}
+
                 </div>
 
             </div>
@@ -204,13 +277,13 @@
         </div>
 
 
-        <!-- ========================= -->
-        <!-- DATA KATEGORI -->
-        <!-- ========================= -->
+        <!-- Data Kategori -->
 
         <div class="section">
 
-            <h2>Data Kategori</h2>
+            <h2>
+                Data Kategori
+            </h2>
 
             <div class="table-container">
 
@@ -221,40 +294,55 @@
                         <tr>
 
                             <th>No</th>
+
                             <th>ID</th>
+
                             <th>Nama Kategori</th>
+
                             <th>Slug</th>
 
                         </tr>
 
                     </thead>
 
-
                     <tbody>
 
-                        @foreach ($categories as $index => $category)
+                        @forelse ($categories as $index => $category)
 
-                        <tr>
+                            <tr>
 
-                            <td>
-                                {{ $index + 1 }}
-                            </td>
+                                <td>
+                                    {{ $index + 1 }}
+                                </td>
 
-                            <td>
-                                {{ $category->id }}
-                            </td>
+                                <td>
+                                    {{ $category->id }}
+                                </td>
 
-                            <td>
-                                {{ $category->name }}
-                            </td>
+                                <td>
+                                    {{ $category->name }}
+                                </td>
 
-                            <td>
-                                {{ $category->slug }}
-                            </td>
+                                <td>
+                                    {{ $category->slug }}
+                                </td>
 
-                        </tr>
+                            </tr>
 
-                        @endforeach
+                        @empty
+
+                            <tr>
+
+                                <td colspan="4"
+                                    style="text-align: center;">
+
+                                    Belum ada data kategori.
+
+                                </td>
+
+                            </tr>
+
+                        @endforelse
 
                     </tbody>
 
@@ -265,13 +353,25 @@
         </div>
 
 
-        <!-- ========================= -->
-        <!-- DATA PRODUK -->
-        <!-- ========================= -->
+        <!-- Data Produk -->
 
         <div class="section">
 
-            <h2>Data Produk</h2>
+            <div class="section-header">
+
+                <h2>
+                    Data Produk
+                </h2>
+
+                <a href="{{ route('products.index') }}"
+                   class="btn btn-primary">
+
+                    Kelola Produk
+
+                </a>
+
+            </div>
+
 
             <div class="table-container">
 
@@ -282,11 +382,17 @@
                         <tr>
 
                             <th>No</th>
+
                             <th>ID</th>
+
                             <th>Kategori</th>
+
                             <th>Nama Produk</th>
+
                             <th>SKU</th>
+
                             <th>Harga</th>
+
                             <th>Stok</th>
 
                         </tr>
@@ -296,45 +402,63 @@
 
                     <tbody>
 
-                        @foreach ($products as $index => $product)
+                        @forelse ($products as $index => $product)
 
-                        <tr>
+                            <tr>
 
-                            <td>
-                                {{ $index + 1 }}
-                            </td>
+                                <td>
+                                    {{ $index + 1 }}
+                                </td>
 
-                            <td>
-                                {{ $product->id }}
-                            </td>
+                                <td>
+                                    {{ $product->id }}
+                                </td>
 
-                            <td>
+                                <td>
 
-                                <span class="badge">
-                                    {{ $product->category_name }}
-                                </span>
+                                    <span class="badge">
 
-                            </td>
+                                        {{ $product->category_name }}
 
-                            <td>
-                                {{ $product->name }}
-                            </td>
+                                    </span>
 
-                            <td>
-                                {{ $product->sku }}
-                            </td>
+                                </td>
 
-                            <td>
-                                Rp {{ number_format($product->price, 0, ',', '.') }}
-                            </td>
+                                <td>
+                                    {{ $product->name }}
+                                </td>
 
-                            <td>
-                                {{ $product->stock }}
-                            </td>
+                                <td>
+                                    {{ $product->sku }}
+                                </td>
 
-                        </tr>
+                                <td>
 
-                        @endforeach
+                                    Rp
+                                    {{ number_format($product->price, 0, ',', '.') }}
+
+                                </td>
+
+                                <td>
+                                    {{ $product->stock }}
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+
+                                <td colspan="7"
+                                    style="text-align: center;">
+
+                                    Belum ada data produk.
+
+                                </td>
+
+                            </tr>
+
+                        @endforelse
 
                     </tbody>
 
@@ -345,13 +469,13 @@
         </div>
 
 
-        <!-- ========================= -->
-        <!-- DATA SUPPLIER -->
-        <!-- ========================= -->
+        <!-- Data Supplier -->
 
         <div class="section">
 
-            <h2>Data Supplier</h2>
+            <h2>
+                Data Supplier
+            </h2>
 
             <div class="table-container">
 
@@ -362,9 +486,13 @@
                         <tr>
 
                             <th>No</th>
+
                             <th>ID</th>
+
                             <th>Nama Supplier</th>
+
                             <th>Telepon</th>
+
                             <th>Alamat</th>
 
                         </tr>
@@ -374,33 +502,46 @@
 
                     <tbody>
 
-                        @foreach ($suppliers as $index => $supplier)
+                        @forelse ($suppliers as $index => $supplier)
 
-                        <tr>
+                            <tr>
 
-                            <td>
-                                {{ $index + 1 }}
-                            </td>
+                                <td>
+                                    {{ $index + 1 }}
+                                </td>
 
-                            <td>
-                                {{ $supplier->id }}
-                            </td>
+                                <td>
+                                    {{ $supplier->id }}
+                                </td>
 
-                            <td>
-                                {{ $supplier->name }}
-                            </td>
+                                <td>
+                                    {{ $supplier->name }}
+                                </td>
 
-                            <td>
-                                {{ $supplier->phone }}
-                            </td>
+                                <td>
+                                    {{ $supplier->phone }}
+                                </td>
 
-                            <td>
-                                {{ $supplier->address }}
-                            </td>
+                                <td>
+                                    {{ $supplier->address }}
+                                </td>
 
-                        </tr>
+                            </tr>
 
-                        @endforeach
+                        @empty
+
+                            <tr>
+
+                                <td colspan="5"
+                                    style="text-align: center;">
+
+                                    Belum ada data supplier.
+
+                                </td>
+
+                            </tr>
+
+                        @endforelse
 
                     </tbody>
 
@@ -413,7 +554,7 @@
     </div>
 
 
-    <!-- FOOTER -->
+    <!-- Footer -->
 
     <div class="footer">
 
