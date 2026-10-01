@@ -1,0 +1,887 @@
+/* =========================================================
+   KASIR RETAIL POS
+   Sesuai format halaman praktikum
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f5f7;
+    color: #333;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.kasir-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px 30px;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.kasir-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    background: #ffffff;
+
+    padding: 12px 14px;
+
+    margin-bottom: 10px;
+}
+
+.store-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.store-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #222;
+}
+
+.store-address {
+    font-size: 10px;
+    color: #777;
+}
+
+.transaksi-info {
+    text-align: right;
+    font-size: 10px;
+    color: #777;
+}
+
+.transaction-label {
+    font-size: 9px;
+    margin-bottom: 2px;
+}
+
+.transaction-number {
+    font-size: 11px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 2px;
+}
+
+#currentDate {
+    font-size: 9px;
+    color: #777;
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.kasir-content {
+    display: grid;
+
+    grid-template-columns: minmax(0, 1fr) 300px;
+
+    gap: 10px;
+
+    align-items: start;
+}
+
+.kasir-left {
+    min-width: 0;
+}
+
+.kasir-right {
+    min-width: 0;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.card {
+    background: #ffffff;
+
+    border: 1px solid #e3e3e3;
+
+    border-radius: 4px;
+
+    overflow: hidden;
+}
+
+.card + .card {
+    margin-top: 10px;
+}
+
+.card-header {
+    background: #fafafa;
+
+    border-bottom: 1px solid #e5e5e5;
+
+    padding: 9px 11px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    color: #333;
+}
+
+.card-body {
+    padding: 10px;
+}
+
+
+/* =========================================================
+   SEARCH / TAMBAH BARANG
+   ========================================================= */
+
+.search-area {
+    display: grid;
+
+    grid-template-columns: 1fr auto;
+
+    gap: 6px;
+
+    align-items: start;
+}
+
+.search-input {
+    position: relative;
+    width: 100%;
+}
+
+.search-input input {
+    width: 100%;
+
+    height: 32px;
+
+    border: 1px solid #d9d9d9;
+
+    border-radius: 3px;
+
+    padding: 0 9px;
+
+    font-size: 11px;
+
+    outline: none;
+
+    background: #fff;
+}
+
+.search-input input:focus {
+    border-color: #9dbce8;
+}
+
+.btn {
+    border: none;
+
+    border-radius: 3px;
+
+    cursor: pointer;
+
+    font-size: 11px;
+
+    padding: 8px 14px;
+
+    transition: 0.15s ease;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.btn-primary {
+    background: #0d6efd;
+
+    color: white;
+
+    height: 32px;
+
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+
+/* =========================================================
+   HASIL PENCARIAN PRODUK
+   ========================================================= */
+
+.product-results {
+    display: none;
+
+    position: absolute;
+
+    z-index: 100;
+
+    top: 36px;
+
+    left: 0;
+
+    width: 100%;
+
+    background: white;
+
+    border: 1px solid #ddd;
+
+    border-radius: 3px;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    overflow: hidden;
+}
+
+.product-item {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 9px 10px;
+
+    border-bottom: 1px solid #eee;
+
+    cursor: pointer;
+
+    background: #fff;
+}
+
+.product-item:last-child {
+    border-bottom: none;
+}
+
+.product-item:hover {
+    background: #f5f8fc;
+}
+
+.product-name {
+    font-size: 11px;
+
+    font-weight: 600;
+
+    color: #333;
+}
+
+.product-code {
+    font-size: 9px;
+
+    color: #888;
+
+    margin-top: 2px;
+}
+
+.product-price {
+    font-size: 11px;
+
+    font-weight: 600;
+
+    color: #333;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   CUSTOMER
+   ========================================================= */
+
+.customer-area {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 8px;
+
+    margin-top: 9px;
+}
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.form-group label {
+    font-size: 10px;
+
+    font-weight: 600;
+
+    color: #555;
+}
+
+.form-control {
+    width: 100%;
+
+    height: 30px;
+
+    border: 1px solid #d9d9d9;
+
+    border-radius: 3px;
+
+    background: #fff;
+
+    padding: 0 8px;
+
+    font-size: 10px;
+
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: #9dbce8;
+}
+
+
+/* =========================================================
+   CART
+   ========================================================= */
+
+.cart-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+}
+
+#itemCount {
+    font-size: 10px;
+
+    color: #777;
+
+    font-weight: 400;
+}
+
+.table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    background: white;
+}
+
+thead {
+    background: #fafafa;
+}
+
+th {
+    padding: 8px 7px;
+
+    border-bottom: 1px solid #e5e5e5;
+
+    color: #666;
+
+    font-size: 9px;
+
+    font-weight: 600;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+td {
+    padding: 8px 7px;
+
+    border-bottom: 1px solid #eeeeee;
+
+    font-size: 10px;
+
+    vertical-align: middle;
+}
+
+tbody tr:hover {
+    background: #fafafa;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.empty-cart {
+    text-align: center;
+
+    padding: 35px 10px;
+
+    color: #999;
+
+    font-size: 10px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   QTY
+   ========================================================= */
+
+.qty-control {
+    display: inline-flex;
+
+    align-items: center;
+
+    border: 1px solid #ddd;
+
+    border-radius: 3px;
+
+    overflow: hidden;
+
+    background: #fff;
+}
+
+.qty-control button {
+    width: 25px;
+
+    height: 25px;
+
+    border: none;
+
+    background: #f5f5f5;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    color: #444;
+}
+
+.qty-control button:hover {
+    background: #e9e9e9;
+}
+
+.qty-control input {
+    width: 38px;
+
+    height: 25px;
+
+    border: none;
+
+    border-left: 1px solid #ddd;
+
+    border-right: 1px solid #ddd;
+
+    text-align: center;
+
+    font-size: 10px;
+
+    outline: none;
+}
+
+
+/* =========================================================
+   REMOVE BUTTON
+   ========================================================= */
+
+.remove-btn {
+    width: 24px;
+
+    height: 24px;
+
+    border: none;
+
+    border-radius: 3px;
+
+    background: #f8d7da;
+
+    color: #b02a37;
+
+    cursor: pointer;
+
+    font-size: 15px;
+
+    line-height: 24px;
+}
+
+.remove-btn:hover {
+    background: #f1bfc3;
+}
+
+
+/* =========================================================
+   PAYMENT SUMMARY
+   ========================================================= */
+
+.payment-summary {
+    width: 100%;
+}
+
+.summary-row {
+    display: grid;
+
+    grid-template-columns: 1fr auto;
+
+    align-items: center;
+
+    min-height: 28px;
+
+    gap: 8px;
+}
+
+.summary-row span {
+    font-size: 10px;
+
+    color: #555;
+}
+
+.summary-row strong {
+    font-size: 10px;
+
+    color: #333;
+
+    font-weight: 600;
+
+    text-align: right;
+}
+
+.summary-row input {
+    width: 90px;
+
+    height: 26px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 3px;
+
+    padding: 0 6px;
+
+    text-align: right;
+
+    font-size: 10px;
+
+    outline: none;
+}
+
+.summary-row input:focus {
+    border-color: #9dbce8;
+}
+
+
+/* =========================================================
+   TOTAL AKHIR
+   ========================================================= */
+
+.total-box {
+    background: #f4f5f8;
+
+    border-radius: 3px;
+
+    padding: 10px;
+
+    margin-top: 8px;
+
+    margin-bottom: 10px;
+}
+
+.total-label {
+    font-size: 9px;
+
+    color: #777;
+
+    font-weight: 600;
+
+    margin-bottom: 2px;
+}
+
+.total-value {
+    font-size: 19px;
+
+    font-weight: 700;
+
+    color: #222;
+}
+
+
+/* =========================================================
+   PAYMENT
+   ========================================================= */
+
+.payment-box {
+    margin-top: 8px;
+}
+
+.payment-label {
+    font-size: 10px;
+
+    font-weight: 600;
+
+    color: #555;
+
+    margin-bottom: 5px;
+}
+
+.payment-input {
+    width: 100%;
+
+    height: 34px;
+
+    border: 1px solid #b7d1eb;
+
+    border-radius: 3px;
+
+    padding: 0 9px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    text-align: right;
+
+    outline: none;
+
+    background: #fdfefe;
+}
+
+.payment-input:focus {
+    border-color: #6ea8fe;
+
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.08);
+}
+
+
+/* =========================================================
+   PAYMENT METHOD
+   ========================================================= */
+
+.payment-method {
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 4px;
+
+    margin-top: 5px;
+}
+
+.payment-method button {
+    height: 25px;
+
+    border: 1px solid #ddd;
+
+    background: #fff;
+
+    border-radius: 3px;
+
+    cursor: pointer;
+
+    font-size: 9px;
+
+    color: #555;
+}
+
+.payment-method button:hover {
+    background: #f5f5f5;
+}
+
+.payment-method button.active {
+    background: #0d6efd;
+
+    border-color: #0d6efd;
+
+    color: #fff;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   CHANGE / KEMBALIAN
+   ========================================================= */
+
+.change-box {
+    margin-top: 8px;
+
+    background: #d1e7dd;
+
+    border-radius: 3px;
+
+    padding: 8px;
+}
+
+.change-label {
+    font-size: 9px;
+
+    font-weight: 600;
+
+    color: #3b6251;
+
+    margin-bottom: 2px;
+}
+
+.change-value {
+    font-size: 17px;
+
+    font-weight: 700;
+
+    color: #146c43;
+}
+
+.change-box.short-payment {
+    background: #f8d7da;
+}
+
+.change-box.short-payment .change-label {
+    color: #842029;
+}
+
+.change-box.short-payment .change-value {
+    color: #b02a37;
+}
+
+
+/* =========================================================
+   PAYMENT STATUS
+   ========================================================= */
+
+.payment-status {
+    display: none;
+
+    margin-top: 6px;
+
+    padding: 6px 8px;
+
+    border-radius: 3px;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   ACTION BUTTON
+   ========================================================= */
+
+.action-area {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 6px;
+
+    margin-top: 10px;
+}
+
+.btn-warning {
+    background: #ffc107;
+
+    color: #212529;
+}
+
+.btn-danger {
+    background: #dc3545;
+
+    color: #fff;
+}
+
+.btn-success {
+    background: #198754;
+
+    color: #fff;
+}
+
+.btn-pay {
+    grid-column: 1 / -1;
+
+    width: 100%;
+
+    height: 34px;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   HR
+   ========================================================= */
+
+hr {
+    border: none;
+
+    border-top: 1px solid #eeeeee;
+
+    margin: 7px 0;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+    .kasir-container {
+        padding: 15px;
+    }
+
+    .kasir-content {
+        grid-template-columns: 1fr;
+    }
+
+    .kasir-right {
+        width: 100%;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .kasir-container {
+        padding: 10px;
+    }
+
+    .kasir-header {
+        flex-direction: column;
+
+        gap: 10px;
+    }
+
+    .transaksi-info {
+        text-align: left;
+    }
+
+    .customer-area {
+        grid-template-columns: 1fr;
+    }
+
+    .search-area {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-primary {
+        width: 100%;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 650px;
+    }
+}
