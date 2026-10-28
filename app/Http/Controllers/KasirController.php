@@ -5,14 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class KasirController extends Controller
 {
+    // Menampilkan halaman kasir
     public function index()
     {
         return view('kasir');
     }
 
+    // Mencari produk berdasarkan nama atau kode produk
     public function searchProduct(Request $request)
     {
         $keyword = trim($request->input('keyword', ''));
@@ -35,38 +38,38 @@ class KasirController extends Controller
         return response()->json($products);
     }
 
+    // Menyimpan transaksi kasir
     public function storeTransaction(Request $request)
     {
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|integer',
             'items.*.qty' => 'required|integer|min:1',
-
             'subtotal' => 'required|numeric|min:0',
             'discount' => 'required|numeric|min:0',
             'tax' => 'required|numeric|min:0',
             'other_fee' => 'required|numeric|min:0',
             'grand_total' => 'required|numeric|min:0',
-
             'paid_amount' => 'required|numeric|min:0',
             'change_amount' => 'required|numeric|min:0',
-
             'payment_method' => 'required|string|max:50',
         ]);
 
         if ($request->paid_amount < $request->grand_total) {
             return response()->json([
                 'success' => false,
-                'message' => 'Uang pembayaran belum mencukupi.'
+                'message' => 'Uang pembayaran belum mencukupi.',
             ], 422);
         }
 
         try {
             DB::beginTransaction();
 
-            $transactionNumber =
-                'TRX-' . date('YmdHis') . '-' . strtoupper(substr(uniqid(), -4));
+            // Membuat nomor transaksi
+            $transactionNumber = 'TRX-' . date('YmdHis') . '-'
+                . strtoupper(substr(uniqid(), -4));
 
+            // Menyimpan transaksi
             $transactionId = DB::table('transactions')->insertGetId([
                 'transaction_number' => $transactionNumber,
                 'user_id' => Auth::id(),
@@ -83,6 +86,7 @@ class KasirController extends Controller
                 'created_at' => now(),
             ]);
 
+            // Menyimpan detail barang dan mengurangi stok
             foreach ($request->items as $item) {
                 $product = DB::table('products')
                     ->where('id', $item['id'])
@@ -95,14 +99,12 @@ class KasirController extends Controller
 
                 if ($product->stock < $item['qty']) {
                     throw new \Exception(
-                        'Stok produk "' .
-                        $product->name .
-                        '" tidak mencukupi.'
+                        'Stok produk "' . $product->name
+                        . '" tidak mencukupi.'
                     );
                 }
 
-                $subtotalItem =
-                    $product->price * $item['qty'];
+                $subtotalItem = $product->price * $item['qty'];
 
                 DB::table('transaction_details')->insert([
                     'transaction_id' => $transactionId,
@@ -131,7 +133,6 @@ class KasirController extends Controller
             ]);
 
         } catch (\Throwable $e) {
-
             DB::rollBack();
 
             return response()->json([
@@ -141,6 +142,7 @@ class KasirController extends Controller
         }
     }
 
+    // Menampilkan struk transaksi
     public function receipt($id)
     {
         $transaction = DB::table('transactions')
@@ -155,8 +157,68 @@ class KasirController extends Controller
             ->where('transaction_id', $id)
             ->get();
 
-        // File berada di:
-        // resources/views/struk.blade.php
-        return view('struk', compact('transaction', 'details'));
+        return view('struk', compact(
+            'transaction',
+            'details'
+        ));
+    }
+
+    // Membuat dan mengunduh invoice PDF
+    public function invoicePdf($id)
+    {
+        // Mengambil transaksi
+        $transaction = DB::table('transactions')
+            ->where('id', $id)
+            ->first();
+
+        if (!$transaction) {
+            abort(404, 'Transaksi tidak ditemukan.');
+        }
+
+        // Mengambil detail barang transaksi
+        $details = DB::table('transaction_details')
+            ->where('transaction_id', $id)
+            ->get();
+
+        // Menyesuaikan format barang dengan invoice.blade.php
+        $items = $details->map(function ($item) {
+            return [
+                'name' => $item->product_name ?? 'Produk',
+                'quantity' => $item->qty ?? 0,
+                'price' => $item->price ?? 0,
+                'subtotal' => $item->subtotal ?? 0,
+            ];
+        })->toArray();
+
+        // Nomor invoice
+        $invoiceNumber = 'INV-' . $transaction->transaction_number;
+
+        // Tanggal transaksi
+        $date = isset($transaction->created_at)
+            ? date('d/m/Y H:i', strtotime($transaction->created_at))
+            : date('d/m/Y H:i');
+
+        // Nama pelanggan
+        $customer = $transaction->customer_name
+            ?? 'Pelanggan Umum';
+
+        // Total pembayaran
+        $total = $transaction->grand_total ?? 0;
+
+        // Mengirim semua variabel ke tampilan invoice
+        $pdf = Pdf::loadView('invoices.invoice', [
+            'transaction' => $transaction,
+            'details' => $details,
+            'items' => $items,
+            'invoiceNumber' => $invoiceNumber,
+            'date' => $date,
+            'customer' => $customer,
+            'total' => $total,
+        ]);
+
+        // Mengunduh invoice PDF
+        return $pdf->download(
+            'invoice-' . $transaction->transaction_number . '.pdf'
+        );
     }
 }

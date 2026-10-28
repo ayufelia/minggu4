@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Format;
 
 class ProductController extends Controller
 {
-
     // Menampilkan semua produk
     public function index()
     {
@@ -47,24 +47,33 @@ class ProductController extends Controller
 
         $imagePath = null;
 
+        // Upload dan manipulasi gambar
         if ($request->hasFile('image')) {
             $manager = new ImageManager(new Driver());
 
-            $image = $manager->read(
+            $image = $manager->decodePath(
                 $request->file('image')->getRealPath()
             );
 
+            // Ubah ukuran gambar menjadi 800 x 800
             $image->cover(800, 800);
 
+            // Simpan gambar dalam format JPEG
             $filename = uniqid('produk_') . '.jpg';
             $imagePath = 'products/' . $filename;
 
+            Storage::disk('public')->makeDirectory('products');
+
             Storage::disk('public')->put(
                 $imagePath,
-                $image->toJpeg(85)->toString()
+                (string) $image->encodeUsingFormat(
+                    Format::JPEG,
+                    quality: 85
+                )
             );
         }
 
+        // Simpan data produk ke database
         DB::table('products')->insert([
             'category_id' => $request->category_id,
             'name' => $request->name,
@@ -115,12 +124,13 @@ class ProductController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
+        // Pertahankan gambar lama jika tidak memilih gambar baru
         $imagePath = $product->image;
 
         if ($request->hasFile('image')) {
             $manager = new ImageManager(new Driver());
 
-            $image = $manager->read(
+            $image = $manager->decodePath(
                 $request->file('image')->getRealPath()
             );
 
@@ -129,11 +139,17 @@ class ProductController extends Controller
             $filename = uniqid('produk_') . '.jpg';
             $newImagePath = 'products/' . $filename;
 
+            Storage::disk('public')->makeDirectory('products');
+
             Storage::disk('public')->put(
                 $newImagePath,
-                $image->toJpeg(85)->toString()
+                (string) $image->encodeUsingFormat(
+                    Format::JPEG,
+                    quality: 85
+                )
             );
 
+            // Hapus gambar lama setelah gambar baru tersimpan
             if (!empty($product->image)) {
                 Storage::disk('public')->delete($product->image);
             }

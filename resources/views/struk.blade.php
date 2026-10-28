@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Struk Transaksi</title>
@@ -73,6 +72,7 @@
         .summary-row {
             display: flex;
             justify-content: space-between;
+            gap: 10px;
             margin: 4px 0;
         }
 
@@ -89,20 +89,49 @@
             line-height: 1.5;
         }
 
-        .print-button {
-            display: block;
+        /* Tombol di bawah struk */
+        .button-container {
             width: 80mm;
             margin: 15px auto 0;
+        }
+
+        .print-button,
+        .invoice-button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
             padding: 10px;
             border: none;
-            background: #198754;
             color: white;
             cursor: pointer;
             font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            font-size: 14px;
+            font-family: Arial, Helvetica, sans-serif;
+            border-radius: 4px;
         }
 
-        @media print {
+        /* Tombol cetak struk */
+        .print-button {
+            background: #198754;
+        }
 
+        .print-button:hover {
+            background: #146c43;
+        }
+
+        /* Tombol cetak invoice PDF */
+        .invoice-button {
+            background: #0d6efd;
+        }
+
+        .invoice-button:hover {
+            background: #0b5ed7;
+        }
+
+        /* Tampilan ketika dicetak */
+        @media print {
             body {
                 padding: 0;
                 background: white;
@@ -114,246 +143,194 @@
                 padding: 5mm;
             }
 
-            .print-button {
-                display: none;
+            .button-container {
+                display: none !important;
             }
         }
     </style>
-
 </head>
 
 <body>
 
-<div class="receipt">
+    {{-- STRUK TRANSAKSI --}}
+    <div class="receipt">
 
-    <div class="store-name">
-        TOKO RETAIL MAKMUR
-    </div>
-
-    <div class="store-info">
-        Jl. Contoh No. 123 • Jember
-        <br>
-        Telp. 0812-xxxx-xxxx
-    </div>
-
-
-    <div class="line"></div>
-
-
-    <div class="transaction-info">
-
-        <div>
-            No. Transaksi :
-            {{ $transaction->transaction_number ?? 'TRX-001' }}
+        {{-- Informasi toko --}}
+        <div class="store-name">
+            TOKO RETAIL MAKMUR
         </div>
 
-        <div>
-            Tanggal :
-            {{ isset($transaction->created_at)
-                ? date('d/m/Y H:i', strtotime($transaction->created_at))
-                : date('d/m/Y H:i') }}
+        <div class="store-info">
+            Jl. Contoh No. 123 • Jember
+            <br>
+            Telp. 0812-xxxx-xxxx
         </div>
-
-        <div>
-            Kasir :
-            {{ $transaction->cashier_name ?? 'Kasir' }}
-        </div>
-
-    </div>
-
-
-    <div class="line"></div>
-
-
-    {{-- BARANG --}}
-    @if(isset($details))
-
-        @foreach($details as $item)
-
-            <div class="item">
-
-                <div class="item-name">
-                    {{ $item->product_name }}
-                </div>
-
-                <div class="item-detail">
-
-                    <span>
-                        {{ $item->qty }}
-                        x
-                        {{ number_format($item->price, 0, ',', '.') }}
-                    </span>
-
-                    <span>
-                        Rp
-                        {{ number_format($item->subtotal, 0, ',', '.') }}
-                    </span>
-
-                </div>
-
-            </div>
-
-        @endforeach
-
-    @endif
-
-
-    <div class="line"></div>
-
-
-    {{-- RINGKASAN --}}
-    <div class="summary">
-
-        <div class="summary-row">
-
-            <span>
-                Subtotal
-            </span>
-
-            <span>
-                Rp
-                {{ number_format($transaction->subtotal ?? 0, 0, ',', '.') }}
-            </span>
-
-        </div>
-
-
-        <div class="summary-row">
-
-            <span>
-                Diskon
-            </span>
-
-            <span>
-                Rp
-                {{ number_format($transaction->discount ?? 0, 0, ',', '.') }}
-            </span>
-
-        </div>
-
-
-        <div class="summary-row">
-
-            <span>
-                PPN
-            </span>
-
-            <span>
-                Rp
-                {{ number_format($transaction->tax ?? 0, 0, ',', '.') }}
-            </span>
-
-        </div>
-
-
-        <div class="summary-row">
-
-            <span>
-                Biaya Lain
-            </span>
-
-            <span>
-                Rp
-                {{ number_format($transaction->other_fee ?? 0, 0, ',', '.') }}
-            </span>
-
-        </div>
-
 
         <div class="line"></div>
 
+        {{-- Informasi transaksi --}}
+        <div class="transaction-info">
 
-        <div class="summary-row grand-total">
+            <div>
+                No. Transaksi:
+                {{ $transaction->transaction_number ?? 'TRX-001' }}
+            </div>
 
-            <span>
-                TOTAL
-            </span>
+            <div>
+                Tanggal:
+                {{ isset($transaction->created_at)
+                    ? date('d/m/Y H:i', strtotime($transaction->created_at))
+                    : date('d/m/Y H:i') }}
+            </div>
 
-            <span>
-                Rp
-                {{ number_format($transaction->grand_total ?? 0, 0, ',', '.') }}
-            </span>
-
-        </div>
-
-
-        <div class="summary-row">
-
-            <span>
-                Bayar
-            </span>
-
-            <span>
-                Rp
-                {{ number_format($transaction->paid_amount ?? 0, 0, ',', '.') }}
-            </span>
+            <div>
+                Kasir:
+                {{ $transaction->cashier_name ?? 'Kasir' }}
+            </div>
 
         </div>
 
+        <div class="line"></div>
 
-        <div class="summary-row">
+        {{-- Daftar barang yang dibeli --}}
+        @if(isset($details) && count($details) > 0)
 
-            <span>
-                Kembali
-            </span>
+            @foreach($details as $item)
 
-            <span>
-                Rp
-                {{ number_format($transaction->change_amount ?? 0, 0, ',', '.') }}
-            </span>
+                <div class="item">
+
+                    <div class="item-name">
+                        {{ $item->product_name ?? 'Produk' }}
+                    </div>
+
+                    <div class="item-detail">
+
+                        <span>
+                            {{ $item->qty ?? 0 }}
+                            x
+                            {{ number_format($item->price ?? 0, 0, ',', '.') }}
+                        </span>
+
+                        <span>
+                            Rp {{ number_format($item->subtotal ?? 0, 0, ',', '.') }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            @endforeach
+
+        @else
+
+            <div class="item">
+                Tidak ada detail barang.
+            </div>
+
+        @endif
+
+        <div class="line"></div>
+
+        {{-- Ringkasan pembayaran --}}
+        <div class="summary">
+
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span>
+                    Rp {{ number_format($transaction->subtotal ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+
+            <div class="summary-row">
+                <span>Diskon</span>
+                <span>
+                    Rp {{ number_format($transaction->discount ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+
+            <div class="summary-row">
+                <span>PPN</span>
+                <span>
+                    Rp {{ number_format($transaction->tax ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+
+            <div class="summary-row">
+                <span>Biaya Lain</span>
+                <span>
+                    Rp {{ number_format($transaction->other_fee ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+
+            <div class="line"></div>
+
+            <div class="summary-row grand-total">
+                <span>TOTAL</span>
+                <span>
+                    Rp {{ number_format($transaction->grand_total ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+
+            <div class="summary-row">
+                <span>Bayar</span>
+                <span>
+                    Rp {{ number_format($transaction->paid_amount ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+
+            <div class="summary-row">
+                <span>Kembali</span>
+                <span>
+                    Rp {{ number_format($transaction->change_amount ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+
+            <div class="summary-row">
+                <span>Pembayaran</span>
+                <span>
+                    {{ $transaction->payment_method ?? 'Tunai' }}
+                </span>
+            </div>
 
         </div>
 
+        <div class="line"></div>
 
-        <div class="summary-row">
-
-            <span>
-                Pembayaran
-            </span>
-
-            <span>
-                {{ $transaction->payment_method ?? 'Tunai' }}
-            </span>
-
+        {{-- Penutup struk --}}
+        <div class="footer">
+            Terima kasih telah berbelanja
+            <br>
+            di TOKO RETAIL MAKMUR
         </div>
 
     </div>
 
+    {{-- TOMBOL CETAK --}}
+    <div class="button-container">
 
-    <div class="line"></div>
+        {{-- Cetak struk menggunakan printer --}}
+        <button
+            type="button"
+            class="print-button"
+            onclick="window.print()">
+            CETAK STRUK
+        </button>
 
-
-    <div class="footer">
-
-        Terima kasih telah berbelanja
-
-        <br>
-
-        di TOKO RETAIL MAKMUR
+        {{-- Unduh invoice dalam format PDF --}}
+        <a
+            href="{{ route('kasir.invoice', ['id' => $transaction->id]) }}"
+            class="invoice-button">
+            CETAK INVOICE PDF
+        </a>
 
     </div>
 
-</div>
-
-
-<button
-    class="print-button"
-    onclick="window.print()"
->
-    CETAK STRUK
-</button>
-
-
-<script>
-
-    window.onload = function () {
-
-        window.print();
-
-    };
-
-</script>
+    {{-- Cetak otomatis ketika halaman dibuka --}}
+    <script>
+        window.onload = function () {
+            window.print();
+        };
+    </script>
 
 </body>
-
 </html>

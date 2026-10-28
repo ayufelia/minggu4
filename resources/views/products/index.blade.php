@@ -34,6 +34,7 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow-x: auto;
         }
 
         .top {
@@ -44,6 +45,7 @@
         }
 
         .btn {
+            display: inline-block;
             padding: 10px 15px;
             border-radius: 5px;
             text-decoration: none;
@@ -79,11 +81,27 @@
             color: white;
             padding: 12px;
             text-align: left;
+            white-space: nowrap;
         }
 
         td {
             padding: 12px;
             border-bottom: 1px solid #ddd;
+            vertical-align: middle;
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            display: block;
+        }
+
+        .no-image {
+            color: #777;
+            font-size: 12px;
         }
 
         .alert {
@@ -93,8 +111,17 @@
             margin-bottom: 20px;
             border-radius: 5px;
         }
-    </style>
 
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-buttons form {
+            margin: 0;
+        }
+    </style>
 </head>
 
 <body>
@@ -108,17 +135,15 @@
         <div class="section">
 
             <div class="top">
-
                 <h2>Daftar Produk</h2>
 
                 <a href="{{ route('products.create') }}"
                    class="btn btn-primary">
                     + Tambah Produk
                 </a>
-
             </div>
 
-            @if(session('success'))
+            @if (session('success'))
                 <div class="alert">
                     {{ session('success') }}
                 </div>
@@ -129,6 +154,7 @@
                 <thead>
                     <tr>
                         <th>No</th>
+                        <th>Gambar</th>
                         <th>Nama Produk</th>
                         <th>Kategori</th>
                         <th>SKU</th>
@@ -140,57 +166,77 @@
 
                 <tbody>
 
-                    @forelse($products as $product)
+                    @forelse ($products as $product)
 
-                    <tr>
+                        <tr>
 
-                        <td>{{ $loop->iteration }}</td>
+                            <td>{{ $loop->iteration }}</td>
 
-                        <td>{{ $product->name }}</td>
+                            <td>
+                                @if (!empty($product->image))
+                                    <img
+                                        src="{{ asset('storage/' . $product->image) }}"
+                                        alt="{{ $product->name }}"
+                                        class="product-image"
+                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
+                                    >
+                                    <span class="no-image" style="display:none;">
+                                        Gambar tidak ditemukan
+                                    </span>
+                                @else
+                                    <span class="no-image">
+                                        Tidak ada gambar
+                                    </span>
+                                @endif
+                            </td>
 
-                        <td>{{ $product->category_name }}</td>
+                            <td>{{ $product->name }}</td>
 
-                        <td>{{ $product->sku }}</td>
+                            <td>{{ $product->category_name }}</td>
 
-                        <td>
-                            Rp {{ number_format($product->price, 0, ',', '.') }}
-                        </td>
+                            <td>{{ $product->sku }}</td>
 
-                        <td>{{ $product->stock }}</td>
+                            <td>
+                                Rp {{ number_format($product->price, 0, ',', '.') }}
+                            </td>
 
-                        <td>
+                            <td>{{ $product->stock }}</td>
 
-                            <a href="{{ route('products.edit', $product->id) }}"
-                               class="btn btn-warning">
-                                Edit
-                            </a>
+                            <td>
+                                <div class="action-buttons">
 
-                            <form action="{{ route('products.destroy', $product->id) }}"
-                                  method="POST"
-                                  style="display:inline;">
+                                    <a href="{{ route('products.edit', $product->id) }}"
+                                       class="btn btn-warning">
+                                        Edit
+                                    </a>
 
-                                @csrf
-                                @method('DELETE')
+                                    <form
+                                        action="{{ route('products.destroy', $product->id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
 
-                                <button type="submit"
-                                        class="btn btn-danger"
-                                        onclick="return confirm('Yakin ingin menghapus produk ini?')">
-                                    Hapus
-                                </button>
+                                        @csrf
+                                        @method('DELETE')
 
-                            </form>
+                                        <button type="submit"
+                                                class="btn btn-danger">
+                                            Hapus
+                                        </button>
 
-                        </td>
+                                    </form>
 
-                    </tr>
+                                </div>
+                            </td>
+
+                        </tr>
 
                     @empty
 
-                    <tr>
-                        <td colspan="7" style="text-align:center;">
-                            Belum ada data produk.
-                        </td>
-                    </tr>
+                        <tr>
+                            <td colspan="8" style="text-align:center;">
+                                Belum ada data produk.
+                            </td>
+                        </tr>
 
                     @endforelse
 
@@ -210,5 +256,4 @@
     </div>
 
 </body>
-
 </html>
