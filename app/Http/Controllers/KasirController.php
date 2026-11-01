@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Events\OrderPlaced;
 
 class KasirController extends Controller
 {
@@ -88,6 +89,7 @@ class KasirController extends Controller
 
             // Menyimpan detail barang dan mengurangi stok
             foreach ($request->items as $item) {
+
                 $product = DB::table('products')
                     ->where('id', $item['id'])
                     ->lockForUpdate()
@@ -123,7 +125,16 @@ class KasirController extends Controller
                     ->decrement('stock', $item['qty']);
             }
 
+            // Menyelesaikan transaksi database
             DB::commit();
+
+            // Mengambil data transaksi yang sudah tersimpan
+            $transaction = DB::table('transactions')
+                ->where('id', $transactionId)
+                ->first();
+
+            // Mengirim event broadcast ke Laravel Reverb
+            OrderPlaced::dispatch($transaction);
 
             return response()->json([
                 'success' => true,
@@ -133,7 +144,11 @@ class KasirController extends Controller
             ]);
 
         } catch (\Throwable $e) {
-            DB::rollBack();
+
+            // Rollback jika transaksi database masih berjalan
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
 
             return response()->json([
                 'success' => false,

@@ -32,7 +32,6 @@ class InvoiceController extends Controller
                 'price' => 16000,
             ],
         ];
-
         // Menghitung total pembayaran
         $total = 0;
 

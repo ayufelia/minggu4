@@ -511,8 +511,11 @@
 </div>
 
 
+{{-- ================= LARAVEL ECHO / REVERB ================= --}}
+@vite('resources/js/app.js')
+
+{{-- ================= JAVASCRIPT KASIR ================= --}}
 <script src="{{ asset('js/kasir.js') }}"></script>
 
 </body>
-
 </html>
