@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Events\OrderPlaced;
+use Mike42\Escpos\Printer;
+use Mike42\Escpos\PrintConnectors\FilePrintConnector;
 
 class KasirController extends Controller
 {
@@ -136,10 +139,24 @@ class KasirController extends Controller
             // Mengirim event broadcast ke Laravel Reverb
             OrderPlaced::dispatch($transaction);
 
+            // Mencetak struk secara otomatis ke file simulasi
+            $printStatus = 'success';
+            $printMessage = 'Struk berhasil dibuat.';
+
+            try {
+                $this->printReceiptToFile($transactionId);
+            } catch (\Throwable $printError) {
+                $printStatus = 'failed';
+                $printMessage = 'Transaksi berhasil, tetapi struk gagal dibuat: '
+                    . $printError->getMessage();
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil disimpan.',
                 'transaction_id' => $transactionId,
+                'print_status' => $printStatus,
+                'print_message' => $printMessage,
                 'redirect' => url('/kasir/struk/' . $transactionId),
             ]);
 
@@ -155,6 +172,142 @@ class KasirController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    // Membuat struk menggunakan printer ESC/POS simulasi
+    private function printReceiptToFile($id)
+    {
+        // Mengambil data transaksi
+        $transaction = DB::table('transactions')
+            ->where('id', $id)
+            ->first();
+
+        if (!$transaction) {
+            throw new \Exception('Transaksi tidak ditemukan.');
+        }
+
+        // Mengambil detail barang
+        $details = DB::table('transaction_details')
+            ->where('transaction_id', $id)
+            ->get();
+
+        // Membuat folder penyimpanan struk
+        $directory = storage_path('app/receipts');
+
+        File::ensureDirectoryExists($directory);
+
+        // Menentukan lokasi file struk
+        $filePath = $directory . '/receipt-' . $id . '.prn';
+
+        // Membuat koneksi printer simulasi
+        $connector = new FilePrintConnector($filePath);
+        $printer = new Printer($connector);
+
+        try {
+            // Judul struk
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            $printer->text("TOKO RETAIL MAKMUR\n");
+            $printer->setEmphasis(false);
+            $printer->text("Jl. Contoh No. 123 - Jember\n");
+
+            $printer->text("--------------------------------\n");
+
+            // Informasi transaksi
+            $printer->setJustification(Printer::JUSTIFY_LEFT);
+            $printer->text(
+                "No: " . $transaction->transaction_number . "\n"
+            );
+
+            $printer->text(
+                "Tanggal: " . $transaction->created_at . "\n"
+            );
+
+            $printer->text("--------------------------------\n");
+
+            // Daftar barang
+            foreach ($details as $item) {
+                $printer->text($item->product_name . "\n");
+
+                $printer->text(
+                    $item->qty . " x Rp"
+                    . number_format($item->price, 0, ',', '.')
+                    . " = Rp"
+                    . number_format($item->subtotal, 0, ',', '.')
+                    . "\n"
+                );
+            }
+
+            $printer->text("--------------------------------\n");
+
+            // Rincian pembayaran
+            $printer->text(
+                "Subtotal: Rp"
+                . number_format($transaction->subtotal, 0, ',', '.')
+                . "\n"
+            );
+
+            $printer->text(
+                "Diskon: Rp"
+                . number_format($transaction->discount, 0, ',', '.')
+                . "\n"
+            );
+
+            $printer->text(
+                "Pajak: Rp"
+                . number_format($transaction->tax, 0, ',', '.')
+                . "\n"
+            );
+
+            $printer->text(
+                "Biaya lain: Rp"
+                . number_format($transaction->other_fee, 0, ',', '.')
+                . "\n"
+            );
+
+            // Total pembayaran
+            $printer->setEmphasis(true);
+
+            $printer->text(
+                "TOTAL: Rp"
+                . number_format($transaction->grand_total, 0, ',', '.')
+                . "\n"
+            );
+
+            $printer->setEmphasis(false);
+
+            $printer->text(
+                "Bayar: Rp"
+                . number_format($transaction->paid_amount, 0, ',', '.')
+                . "\n"
+            );
+
+            $printer->text(
+                "Kembali: Rp"
+                . number_format($transaction->change_amount, 0, ',', '.')
+                . "\n"
+            );
+
+            $printer->text(
+                "Metode: " . $transaction->payment_method . "\n"
+            );
+
+            // Penutup struk
+            $printer->text("--------------------------------\n");
+
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
+            $printer->text("Terima kasih telah berbelanja!\n");
+
+            // Memberi jarak dan memotong kertas
+            $printer->feed(3);
+            $printer->cut();
+
+        } finally {
+            // Menutup koneksi printer
+            $printer->close();
+        }
+
+        return $filePath;
     }
 
     // Menampilkan struk transaksi
