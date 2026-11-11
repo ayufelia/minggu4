@@ -10,13 +10,21 @@
     <title>Kasir Retail POS</title>
 
     <link rel="stylesheet" href="{{ asset('css/kasir.css') }}">
+
+    {{-- Midtrans Snap --}}
+    <script
+        type="text/javascript"
+        src="{{ config('midtrans.isProduction') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+        data-client-key="{{ config('midtrans.clientKey') }}">
+    </script>
+
 </head>
 
 <body>
 
 <div class="kasir-container">
 
-    {{-- ================= HEADER ================= --}}
+    {{-- HEADER --}}
     <header class="kasir-header">
 
         <div class="store-info">
@@ -37,10 +45,7 @@
                 No. Transaksi
             </div>
 
-            <div
-                class="transaction-number"
-                id="transactionNumber"
-            >
+            <div class="transaction-number" id="transactionNumber">
                 TRX-20260911-001
             </div>
 
@@ -51,13 +56,13 @@
     </header>
 
 
-    {{-- ================= MAIN ================= --}}
+    {{-- MAIN --}}
     <main class="kasir-content">
 
-        {{-- ================= BAGIAN KIRI ================= --}}
+        {{-- BAGIAN KIRI --}}
         <section class="kasir-left">
 
-            {{-- ================= TAMBAH BARANG ================= --}}
+            {{-- TAMBAH BARANG --}}
             <div class="card">
 
                 <div class="card-header">
@@ -95,7 +100,7 @@
                     </div>
 
 
-                    {{-- ================= CUSTOMER ================= --}}
+                    {{-- CUSTOMER --}}
                     <div class="customer-area">
 
                         <div class="form-group">
@@ -108,17 +113,9 @@
                                 id="customer"
                                 class="form-control"
                             >
-                                <option value="Umum">
-                                    Umum
-                                </option>
-
-                                <option value="Pelanggan Member">
-                                    Pelanggan Member
-                                </option>
-
-                                <option value="Member VIP">
-                                    Member VIP
-                                </option>
+                                <option value="Umum">Umum</option>
+                                <option value="Pelanggan Member">Pelanggan Member</option>
+                                <option value="Member VIP">Member VIP</option>
                             </select>
 
                         </div>
@@ -146,23 +143,16 @@
             </div>
 
 
-            {{-- ================= KERANJANG ================= --}}
-            <div
-                class="card"
-                style="margin-top: 15px;"
-            >
+            {{-- KERANJANG --}}
+            <div class="card" style="margin-top: 15px;">
 
                 <div class="card-header">
 
                     <div class="cart-header">
 
-                        <span>
-                            Keranjang Belanja
-                        </span>
+                        <span>Keranjang Belanja</span>
 
-                        <span id="itemCount">
-                            0 Item
-                        </span>
+                        <span id="itemCount">0 Item</span>
 
                     </div>
 
@@ -176,36 +166,12 @@
                         <thead>
 
                             <tr>
-
-                                <th width="40">
-                                    No
-                                </th>
-
-                                <th>
-                                    Barang
-                                </th>
-
-                                <th width="100">
-                                    Harga
-                                </th>
-
-                                <th
-                                    width="120"
-                                    class="text-center"
-                                >
-                                    Qty
-                                </th>
-
-                                <th
-                                    width="120"
-                                    class="text-right"
-                                >
-                                    Subtotal
-                                </th>
-
-                                <th width="40">
-                                </th>
-
+                                <th width="40">No</th>
+                                <th>Barang</th>
+                                <th width="100">Harga</th>
+                                <th width="120" class="text-center">Qty</th>
+                                <th width="120" class="text-right">Subtotal</th>
+                                <th width="40"></th>
                             </tr>
 
                         </thead>
@@ -215,10 +181,7 @@
 
                             <tr id="emptyRow">
 
-                                <td
-                                    colspan="6"
-                                    class="empty-cart"
-                                >
+                                <td colspan="6" class="empty-cart">
                                     Keranjang masih kosong.
                                     <br>
                                     Silakan cari atau scan barang.
@@ -237,10 +200,9 @@
         </section>
 
 
-        {{-- ================= BAGIAN KANAN ================= --}}
+        {{-- BAGIAN KANAN --}}
         <aside class="kasir-right">
 
-            {{-- ================= RINGKASAN PEMBAYARAN ================= --}}
             <div class="card">
 
                 <div class="card-header">
@@ -254,38 +216,22 @@
 
                         {{-- TOTAL ITEM --}}
                         <div class="summary-row">
-
-                            <span>
-                                Total Item
-                            </span>
-
-                            <strong id="totalQty">
-                                0
-                            </strong>
-
+                            <span>Total Item</span>
+                            <strong id="totalQty">0</strong>
                         </div>
 
 
                         {{-- SUBTOTAL --}}
                         <div class="summary-row">
-
-                            <span>
-                                Subtotal
-                            </span>
-
-                            <strong id="subtotal">
-                                Rp 0
-                            </strong>
-
+                            <span>Subtotal</span>
+                            <strong id="subtotal">Rp 0</strong>
                         </div>
 
 
                         {{-- DISKON PERSEN --}}
                         <div class="summary-row">
 
-                            <span>
-                                Diskon (%)
-                            </span>
+                            <span>Diskon (%)</span>
 
                             <input
                                 type="number"
@@ -302,9 +248,7 @@
                         {{-- DISKON NOMINAL --}}
                         <div class="summary-row">
 
-                            <span>
-                                Diskon (Rp)
-                            </span>
+                            <span>Diskon (Rp)</span>
 
                             <input
                                 type="number"
@@ -320,9 +264,7 @@
                         {{-- PAJAK --}}
                         <div class="summary-row">
 
-                            <span>
-                                Pajak / PPN
-                            </span>
+                            <span>Pajak / PPN</span>
 
                             <input
                                 type="number"
@@ -338,9 +280,7 @@
                         {{-- BIAYA LAIN --}}
                         <div class="summary-row">
 
-                            <span>
-                                Biaya Lain
-                            </span>
+                            <span>Biaya Lain</span>
 
                             <input
                                 type="number"
@@ -353,24 +293,21 @@
                         </div>
 
 
-                        {{-- TOTAL AKHIR --}}
+                        {{-- TOTAL --}}
                         <div class="total-box">
 
                             <div class="total-label">
                                 TOTAL AKHIR
                             </div>
 
-                            <div
-                                class="total-value"
-                                id="grandTotal"
-                            >
+                            <div class="total-value" id="grandTotal">
                                 Rp 0
                             </div>
 
                         </div>
 
 
-                        {{-- ================= PAYMENT ================= --}}
+                        {{-- PEMBAYARAN --}}
                         <div class="payment-box">
 
                             <div class="payment-label">
@@ -388,7 +325,7 @@
                             >
 
 
-                            {{-- METODE PEMBAYARAN --}}
+                            {{-- METODE --}}
                             <div
                                 class="payment-label"
                                 style="margin-top: 15px;"
@@ -446,19 +383,13 @@
 
 
                             {{-- KEMBALIAN --}}
-                            <div
-                                class="change-box"
-                                id="changeBox"
-                            >
+                            <div class="change-box" id="changeBox">
 
                                 <div class="change-label">
                                     KEMBALIAN
                                 </div>
 
-                                <div
-                                    class="change-value"
-                                    id="change"
-                                >
+                                <div class="change-value" id="change">
                                     Rp 0
                                 </div>
 
@@ -467,7 +398,7 @@
                         </div>
 
 
-                        {{-- ================= ACTION ================= --}}
+                        {{-- TOMBOL --}}
                         <div class="action-area">
 
                             <button
@@ -511,10 +442,11 @@
 </div>
 
 
-{{-- ================= LARAVEL ECHO / REVERB ================= --}}
+{{-- LARAVEL ECHO / REVERB --}}
 @vite('resources/js/app.js')
 
-{{-- ================= JAVASCRIPT KASIR ================= --}}
+
+{{-- JAVASCRIPT KASIR --}}
 <script src="{{ asset('js/kasir.js') }}"></script>
 
 </body>

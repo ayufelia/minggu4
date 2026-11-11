@@ -1,10 +1,11 @@
 // ======================================================
 // KASIR - JAVASCRIPT
+// PEMBAYARAN TUNAI + MIDTRANS
 // ======================================================
 
 let cart = [];
-
 let selectedPaymentMethod = "Tunai";
+let paymentInProgress = false;
 
 
 // ======================================================
@@ -12,7 +13,6 @@ let selectedPaymentMethod = "Tunai";
 // ======================================================
 
 function formatRupiah(number) {
-
     number = Number(number) || 0;
 
     return new Intl.NumberFormat("id-ID", {
@@ -24,35 +24,39 @@ function formatRupiah(number) {
 
 
 // ======================================================
+// CSRF TOKEN
+// ======================================================
+
+function getCsrfToken() {
+    return document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content");
+}
+
+
+// ======================================================
 // SEARCH PRODUCT
 // ======================================================
 
 async function doSearchProduct() {
-
     const input = document.getElementById("searchProduct");
     const resultBox = document.getElementById("productResults");
 
     if (!input || !resultBox) {
-        console.error("Input pencarian atau hasil pencarian tidak ditemukan.");
+        console.error("Input pencarian tidak ditemukan.");
         return;
     }
 
     const keyword = input.value.trim();
 
     if (keyword === "") {
-
         resultBox.innerHTML = "";
         resultBox.style.display = "none";
-
         return;
     }
 
     try {
-
-        console.log("Mencari produk:", keyword);
-
-        const url =
-            `/kasir/search-product?keyword=${encodeURIComponent(keyword)}`;
+        const url = `/kasir/search-product?keyword=${encodeURIComponent(keyword)}`;
 
         const response = await fetch(url, {
             method: "GET",
@@ -62,109 +66,67 @@ async function doSearchProduct() {
             }
         });
 
-        console.log("Status pencarian:", response.status);
-
         if (!response.ok) {
-
-            throw new Error(
-                `HTTP ${response.status} - ${response.statusText}`
-            );
+            throw new Error(`HTTP ${response.status}`);
         }
 
         const products = await response.json();
-
-        console.log("Produk dari database:", products);
 
         resultBox.innerHTML = "";
         resultBox.style.display = "block";
 
         if (!Array.isArray(products) || products.length === 0) {
-
             resultBox.innerHTML = `
                 <div class="search-empty">
                     Produk tidak ditemukan.
                 </div>
             `;
-
             return;
         }
 
-
-        // ==================================================
-        // TAMPILKAN HASIL PRODUK
-        // ==================================================
-
-        products.forEach(function (product) {
-
+        products.forEach(function(product) {
             const item = document.createElement("div");
 
             item.className = "search-result-item";
-
             item.style.cursor = "pointer";
 
             item.innerHTML = `
-
                 <div class="search-result-info">
-
-                    <strong>
-                        ${escapeHtml(product.name)}
-                    </strong>
-
-                    <small>
-                        Kode: ${escapeHtml(product.sku)}
-                    </small>
-
+                    <strong>${escapeHtml(product.name)}</strong>
+                    <small>Kode: ${escapeHtml(product.sku)}</small>
                 </div>
 
                 <div class="search-result-price">
-
                     ${formatRupiah(product.price)}
-
-                    <small>
-                        Stok: ${product.stock}
-                    </small>
-
+                    <small>Stok: ${product.stock}</small>
                 </div>
-
             `;
 
-
-            item.addEventListener("click", function () {
-
+            item.addEventListener("click", function() {
                 addToCart(product);
-
             });
 
-
             resultBox.appendChild(item);
-
         });
 
     } catch (error) {
-
-        console.error(
-            "ERROR PENCARIAN PRODUK:",
-            error
-        );
+        console.error("ERROR PENCARIAN:", error);
 
         resultBox.style.display = "block";
-
         resultBox.innerHTML = `
-
             <div class="search-empty">
-
                 Gagal mengambil data produk.
-
                 <br>
-
-                <small>
-                    ${escapeHtml(error.message)}
-                </small>
-
+                <small>${escapeHtml(error.message)}</small>
             </div>
-
         `;
     }
+}
+
+
+// Fungsi untuk tombol Cari pada Blade
+function searchProduct() {
+    doSearchProduct();
 }
 
 
@@ -173,7 +135,6 @@ async function doSearchProduct() {
 // ======================================================
 
 function escapeHtml(value) {
-
     if (value === null || value === undefined) {
         return "";
     }
@@ -192,89 +153,50 @@ function escapeHtml(value) {
 // ======================================================
 
 function addToCart(product) {
-
-    const stock =
-        Number(product.stock) || 0;
-
+    const stock = Number(product.stock) || 0;
 
     if (stock <= 0) {
-
         alert("Stok produk habis.");
-
         return;
     }
 
-
-    const existing =
-        cart.find(function (item) {
-
-            return Number(item.id) ===
-                Number(product.id);
-
-        });
-
+    const existing = cart.find(function(item) {
+        return Number(item.id) === Number(product.id);
+    });
 
     if (existing) {
-
         if (existing.qty >= stock) {
-
-            alert(
-                "Jumlah melebihi stok tersedia."
-            );
-
+            alert("Jumlah melebihi stok tersedia.");
             return;
         }
 
         existing.qty += 1;
 
     } else {
-
         cart.push({
-
             id: Number(product.id),
-
             name: product.name,
-
             code: product.sku,
-
             price: Number(product.price),
-
             stock: stock,
-
             qty: 1
-
         });
-
     }
 
-
-    const searchInput =
-        document.getElementById("searchProduct");
-
-    const productResults =
-        document.getElementById("productResults");
-
+    const searchInput = document.getElementById("searchProduct");
+    const productResults = document.getElementById("productResults");
 
     if (searchInput) {
-
         searchInput.value = "";
-
     }
-
 
     if (productResults) {
-
         productResults.innerHTML = "";
-
         productResults.style.display = "none";
-
     }
 
-
     renderCart();
-
     calculateTotal();
-
     calculateChange();
 }
 
@@ -284,144 +206,80 @@ function addToCart(product) {
 // ======================================================
 
 function renderCart() {
-
-    const cartBody =
-        document.getElementById("cartBody");
-
+    const cartBody = document.getElementById("cartBody");
 
     if (!cartBody) {
         return;
     }
 
-
     cartBody.innerHTML = "";
 
-
     if (cart.length === 0) {
-
         cartBody.innerHTML = `
-
             <tr>
-
-                <td
-                    colspan="6"
-                    class="empty-cart"
-                >
-
+                <td colspan="6" class="empty-cart">
                     Keranjang masih kosong.
-
                     <br>
-
                     Silakan cari atau scan barang.
-
                 </td>
-
             </tr>
-
         `;
 
         updateItemCount();
-
         return;
     }
 
-
-    cart.forEach(function (item, index) {
-
-        const subtotal =
-            item.price * item.qty;
-
-
-        const row =
-            document.createElement("tr");
-
+    cart.forEach(function(item, index) {
+        const subtotal = item.price * item.qty;
+        const row = document.createElement("tr");
 
         row.innerHTML = `
+            <td>${index + 1}</td>
 
             <td>
-                ${index + 1}
-            </td>
-
-
-            <td>
-
-                <strong>
-                    ${escapeHtml(item.name)}
-                </strong>
-
+                <strong>${escapeHtml(item.name)}</strong>
                 <br>
-
-                <small>
-                    ${escapeHtml(item.code)}
-                </small>
-
+                <small>${escapeHtml(item.code)}</small>
             </td>
 
+            <td>${formatRupiah(item.price)}</td>
 
             <td>
-                ${formatRupiah(item.price)}
-            </td>
-
-
-            <td>
-
                 <div class="qty-control">
-
                     <button
                         type="button"
                         class="qty-button"
-                        onclick="decreaseQty(${item.id})"
-                    >
+                        onclick="decreaseQty(${item.id})">
                         -
                     </button>
 
-
-                    <span>
-                        ${item.qty}
-                    </span>
-
+                    <span>${item.qty}</span>
 
                     <button
                         type="button"
                         class="qty-button"
-                        onclick="increaseQty(${item.id})"
-                    >
+                        onclick="increaseQty(${item.id})">
                         +
                     </button>
-
                 </div>
-
             </td>
 
-
             <td>
-
-                <strong>
-                    ${formatRupiah(subtotal)}
-                </strong>
-
+                <strong>${formatRupiah(subtotal)}</strong>
             </td>
 
-
             <td>
-
                 <button
                     type="button"
                     class="remove-button"
-                    onclick="removeFromCart(${item.id})"
-                >
+                    onclick="removeFromCart(${item.id})">
                     Hapus
                 </button>
-
             </td>
-
         `;
 
-
         cartBody.appendChild(row);
-
     });
-
 
     updateItemCount();
 }
@@ -432,36 +290,20 @@ function renderCart() {
 // ======================================================
 
 function updateItemCount() {
+    const totalQty = cart.reduce(function(total, item) {
+        return total + item.qty;
+    }, 0);
 
-    const totalQty =
-        cart.reduce(function (total, item) {
-
-            return total + item.qty;
-
-        }, 0);
-
-
-    const itemCount =
-        document.getElementById("itemCount");
-
+    const itemCount = document.getElementById("itemCount");
 
     if (itemCount) {
-
-        itemCount.textContent =
-            `${totalQty} Item`;
-
+        itemCount.textContent = `${totalQty} Item`;
     }
 
-
-    const totalQtyElement =
-        document.getElementById("totalQty");
-
+    const totalQtyElement = document.getElementById("totalQty");
 
     if (totalQtyElement) {
-
-        totalQtyElement.textContent =
-            totalQty;
-
+        totalQtyElement.textContent = totalQty;
     }
 }
 
@@ -471,38 +313,23 @@ function updateItemCount() {
 // ======================================================
 
 function increaseQty(productId) {
+    if (paymentInProgress) return;
 
-    const item =
-        cart.find(function (product) {
+    const item = cart.find(function(product) {
+        return Number(product.id) === Number(productId);
+    });
 
-            return Number(product.id) ===
-                Number(productId);
-
-        });
-
-
-    if (!item) {
-        return;
-    }
-
+    if (!item) return;
 
     if (item.qty >= item.stock) {
-
-        alert(
-            "Jumlah sudah mencapai stok tersedia."
-        );
-
+        alert("Jumlah sudah mencapai stok tersedia.");
         return;
     }
-
 
     item.qty += 1;
 
-
     renderCart();
-
     calculateTotal();
-
     calculateChange();
 }
 
@@ -512,37 +339,23 @@ function increaseQty(productId) {
 // ======================================================
 
 function decreaseQty(productId) {
+    if (paymentInProgress) return;
 
-    const item =
-        cart.find(function (product) {
+    const item = cart.find(function(product) {
+        return Number(product.id) === Number(productId);
+    });
 
-            return Number(product.id) ===
-                Number(productId);
-
-        });
-
-
-    if (!item) {
-        return;
-    }
-
+    if (!item) return;
 
     if (item.qty > 1) {
-
         item.qty -= 1;
-
     } else {
-
         removeFromCart(productId);
-
         return;
     }
 
-
     renderCart();
-
     calculateTotal();
-
     calculateChange();
 }
 
@@ -552,20 +365,14 @@ function decreaseQty(productId) {
 // ======================================================
 
 function removeFromCart(productId) {
+    if (paymentInProgress) return;
 
-    cart =
-        cart.filter(function (item) {
-
-            return Number(item.id) !==
-                Number(productId);
-
-        });
-
+    cart = cart.filter(function(item) {
+        return Number(item.id) !== Number(productId);
+    });
 
     renderCart();
-
     calculateTotal();
-
     calculateChange();
 }
 
@@ -575,12 +382,8 @@ function removeFromCart(productId) {
 // ======================================================
 
 function getSubtotal() {
-
-    return cart.reduce(function (total, item) {
-
-        return total +
-            (item.price * item.qty);
-
+    return cart.reduce(function(total, item) {
+        return total + (item.price * item.qty);
     }, 0);
 }
 
@@ -590,37 +393,19 @@ function getSubtotal() {
 // ======================================================
 
 function getDiscount() {
+    const discountPercent = Number(
+        document.getElementById("discountPercent")?.value
+    ) || 0;
 
-    const discountPercentElement =
-        document.getElementById("discountPercent");
+    const discountAmount = Number(
+        document.getElementById("discountAmount")?.value
+    ) || 0;
 
-    const discountAmountElement =
-        document.getElementById("discountAmount");
+    const subtotal = getSubtotal();
 
+    const percentDiscount = subtotal * (discountPercent / 100);
 
-    const discountPercent =
-        Number(
-            discountPercentElement?.value
-        ) || 0;
-
-
-    const discountAmount =
-        Number(
-            discountAmountElement?.value
-        ) || 0;
-
-
-    const subtotal =
-        getSubtotal();
-
-
-    const percentDiscount =
-        subtotal *
-        (discountPercent / 100);
-
-
-    return percentDiscount +
-        discountAmount;
+    return percentDiscount + discountAmount;
 }
 
 
@@ -629,63 +414,34 @@ function getDiscount() {
 // ======================================================
 
 function calculateTotal() {
+    const subtotal = getSubtotal();
+    const discount = getDiscount();
 
-    const subtotal =
-        getSubtotal();
+    const tax = Number(
+        document.getElementById("tax")?.value
+    ) || 0;
 
+    const otherFee = Number(
+        document.getElementById("otherFee")?.value
+    ) || 0;
 
-    const discount =
-        getDiscount();
+    const grandTotal = Math.max(
+        0,
+        subtotal - discount + tax + otherFee
+    );
 
-
-    const tax =
-        Number(
-            document.getElementById("tax")?.value
-        ) || 0;
-
-
-    const otherFee =
-        Number(
-            document.getElementById("otherFee")?.value
-        ) || 0;
-
-
-    const grandTotal =
-        Math.max(
-            0,
-            subtotal -
-            discount +
-            tax +
-            otherFee
-        );
-
-
-    const subtotalElement =
-        document.getElementById("subtotal");
-
-
-    const grandTotalElement =
-        document.getElementById("grandTotal");
-
+    const subtotalElement = document.getElementById("subtotal");
+    const grandTotalElement = document.getElementById("grandTotal");
 
     if (subtotalElement) {
-
-        subtotalElement.textContent =
-            formatRupiah(subtotal);
-
+        subtotalElement.textContent = formatRupiah(subtotal);
     }
-
 
     if (grandTotalElement) {
-
-        grandTotalElement.textContent =
-            formatRupiah(grandTotal);
-
+        grandTotalElement.textContent = formatRupiah(grandTotal);
     }
 
-
     updateItemCount();
-
 
     return grandTotal;
 }
@@ -696,7 +452,6 @@ function calculateTotal() {
 // ======================================================
 
 function getGrandTotal() {
-
     return calculateTotal();
 }
 
@@ -706,268 +461,307 @@ function getGrandTotal() {
 // ======================================================
 
 function calculateChange() {
+    const payment = Number(
+        document.getElementById("payment")?.value
+    ) || 0;
 
-    const paymentElement =
-        document.getElementById("payment");
+    const total = calculateTotal();
+    const change = payment - total;
 
-
-    const payment =
-        Number(
-            paymentElement?.value
-        ) || 0;
-
-
-    const total =
-        calculateTotal();
-
-
-    const change =
-        payment - total;
-
-
-    const changeElement =
-        document.getElementById("change");
-
-
-    const changeBox =
-        document.getElementById("changeBox");
-
+    const changeElement = document.getElementById("change");
+    const changeBox = document.getElementById("changeBox");
 
     if (changeElement) {
-
-        if (change >= 0) {
-
-            changeElement.textContent =
-                formatRupiah(change);
-
-        } else {
-
-            changeElement.textContent =
-                formatRupiah(0);
-
-        }
-
+        changeElement.textContent = formatRupiah(
+            change >= 0 ? change : 0
+        );
     }
 
-
     if (changeBox) {
-
         if (change < 0) {
-
-            changeBox.classList.add(
-                "short-payment"
-            );
-
+            changeBox.classList.add("short-payment");
         } else {
-
-            changeBox.classList.remove(
-                "short-payment"
-            );
-
+            changeBox.classList.remove("short-payment");
         }
-
     }
 }
 
 
 // ======================================================
-// PAYMENT METHOD
+// PILIH METODE PEMBAYARAN
 // ======================================================
 
 function selectPayment(button) {
+    if (paymentInProgress) return;
 
-    document
-        .querySelectorAll(
-            ".payment-method button"
-        )
-        .forEach(function (btn) {
-
-            btn.classList.remove(
-                "active"
-            );
-
+    document.querySelectorAll(".payment-method button")
+        .forEach(function(btn) {
+            btn.classList.remove("active");
         });
 
-
     button.classList.add("active");
-
 
     selectedPaymentMethod =
         button.dataset.method ||
         button.textContent.trim();
+
+    const paymentInput = document.getElementById("payment");
+
+    // Input uang hanya diperlukan untuk pembayaran tunai
+    if (paymentInput) {
+        if (selectedPaymentMethod === "Tunai") {
+            paymentInput.disabled = false;
+            paymentInput.placeholder = "Masukkan uang dibayar";
+        } else {
+            paymentInput.disabled = true;
+            paymentInput.value = "";
+        }
+    }
+
+    calculateChange();
 }
 
 
 // ======================================================
-// PROSES PEMBAYARAN
+// DATA TRANSAKSI
+// ======================================================
+
+function buildTransactionData() {
+    return {
+        items: cart.map(function(item) {
+            return {
+                id: item.id,
+                qty: item.qty
+            };
+        }),
+
+        subtotal: getSubtotal(),
+        discount: getDiscount(),
+
+        tax: Number(
+            document.getElementById("tax")?.value
+        ) || 0,
+
+        other_fee: Number(
+            document.getElementById("otherFee")?.value
+        ) || 0,
+
+        grand_total: getGrandTotal(),
+
+        payment_method: selectedPaymentMethod
+    };
+}
+
+
+// ======================================================
+// PEMBAYARAN TUNAI
+// MENGGUNAKAN CONTROLLER LAMA
+// ======================================================
+
+async function processCashPayment() {
+    const payment = Number(
+        document.getElementById("payment")?.value
+    ) || 0;
+
+    const total = getGrandTotal();
+
+    if (payment < total) {
+        alert("Pembayaran belum mencukupi.");
+        return;
+    }
+
+    const data = buildTransactionData();
+
+    data.paid_amount = payment;
+    data.change_amount = payment - total;
+
+    const response = await fetch("/kasir/transaksi", {
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": getCsrfToken()
+        },
+
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+        throw new Error(
+            result.message || "Transaksi tunai gagal."
+        );
+    }
+
+    if (result.redirect) {
+        window.location.href = result.redirect;
+        return;
+    }
+
+    alert("Transaksi berhasil.");
+
+    window.location.reload();
+}
+
+
+// ======================================================
+// PEMBAYARAN MIDTRANS
+// ======================================================
+
+async function processMidtransPayment() {
+    // Pastikan Snap sudah dimuat
+    if (typeof window.snap === "undefined") {
+        throw new Error(
+            "Midtrans Snap belum dimuat. Periksa Client Key dan koneksi internet."
+        );
+    }
+
+    const data = buildTransactionData();
+
+    const response = await fetch(
+        "/kasir/midtrans/create-payment",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-CSRF-TOKEN": getCsrfToken()
+            },
+
+            body: JSON.stringify(data)
+        }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+        throw new Error(
+            result.message || "Gagal membuat pembayaran Midtrans."
+        );
+    }
+
+    if (!result.snap_token) {
+        throw new Error("Snap Token tidak ditemukan.");
+    }
+
+    // Buka halaman pembayaran Midtrans
+    window.snap.pay(result.snap_token, {
+
+        onSuccess: function(paymentResult) {
+            console.log("Pembayaran berhasil:", paymentResult);
+
+            alert(
+                "Pembayaran berhasil dikirim ke Midtrans. " +
+                "Status transaksi akan diperbarui melalui notifikasi server."
+            );
+
+            cart = [];
+
+            renderCart();
+            calculateTotal();
+            calculateChange();
+
+            const paymentInput = document.getElementById("payment");
+
+            if (paymentInput) {
+                paymentInput.value = "";
+                paymentInput.disabled = false;
+            }
+
+            paymentInProgress = false;
+        },
+
+        onPending: function(paymentResult) {
+            console.log("Pembayaran menunggu:", paymentResult);
+
+            alert(
+                "Pembayaran masih menunggu penyelesaian. " +
+                "Silakan selesaikan pembayaran sesuai instruksi Midtrans. " +
+                "Jangan membuat transaksi baru untuk pesanan yang sama."
+            );
+
+            // Jangan mengosongkan keranjang.
+            // Transaksi sudah tercatat sebagai pending.
+            paymentInProgress = false;
+        },
+
+        onError: function(paymentResult) {
+            console.error("Pembayaran gagal:", paymentResult);
+
+            alert(
+                "Pembayaran gagal. Silakan coba kembali."
+            );
+
+            paymentInProgress = false;
+        },
+
+        onClose: function() {
+            alert(
+                "Halaman pembayaran ditutup. " +
+                "Periksa status transaksi sebelum mencoba membayar lagi."
+            );
+
+            paymentInProgress = false;
+        }
+    });
+}
+
+
+// ======================================================
+// PROSES PEMBAYARAN UTAMA
 // ======================================================
 
 async function processPayment() {
+    if (paymentInProgress) {
+        alert("Pembayaran sedang diproses.");
+        return;
+    }
 
     if (cart.length === 0) {
-
-        alert(
-            "Keranjang masih kosong."
-        );
-
+        alert("Keranjang masih kosong.");
         return;
     }
 
+    const total = getGrandTotal();
 
-    const payment =
-        Number(
-            document.getElementById(
-                "payment"
-            )?.value
-        ) || 0;
-
-
-    const total =
-        calculateTotal();
-
-
-    if (payment < total) {
-
-        alert(
-            "Pembayaran belum mencukupi."
-        );
-
+    if (total <= 0) {
+        alert("Total pembayaran tidak valid.");
         return;
     }
 
+    paymentInProgress = true;
 
-    const change =
-        payment - total;
+    const payButton = document.querySelector(".btn-pay");
 
-
-    const subtotal =
-        getSubtotal();
-
-
-    const discount =
-        getDiscount();
-
-
-    const tax =
-        Number(
-            document.getElementById("tax")?.value
-        ) || 0;
-
-
-    const otherFee =
-        Number(
-            document.getElementById("otherFee")?.value
-        ) || 0;
-
-
-    const data = {
-
-        items: cart.map(function (item) {
-
-            return {
-
-                id: item.id,
-
-                qty: item.qty
-
-            };
-
-        }),
-
-        subtotal: subtotal,
-
-        discount: discount,
-
-        tax: tax,
-
-        other_fee: otherFee,
-
-        grand_total: total,
-
-        paid_amount: payment,
-
-        change_amount: change,
-
-        payment_method:
-            selectedPaymentMethod
-
-    };
-
+    if (payButton) {
+        payButton.disabled = true;
+        payButton.textContent = "MEMPROSES...";
+    }
 
     try {
-
-        const csrfToken =
-            document
-                .querySelector(
-                    'meta[name="csrf-token"]'
-                )
-                ?.getAttribute("content");
-
-
-        const response =
-            await fetch(
-                "/kasir/transaksi",
-                {
-
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json",
-
-                        "Accept":
-                            "application/json",
-
-                        "X-CSRF-TOKEN":
-                            csrfToken
-
-                    },
-
-                    body:
-                        JSON.stringify(data)
-
-                }
-            );
-
-
-        const result =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                result.message ||
-                "Transaksi gagal diproses."
-            );
-
-        }
-
-
-        if (result.success) {
-
-            window.location.href =
-                result.redirect;
-
+        if (selectedPaymentMethod === "Tunai") {
+            await processCashPayment();
         } else {
-
-            alert(
-                result.message ||
-                "Transaksi gagal."
-            );
-
+            await processMidtransPayment();
         }
 
     } catch (error) {
-
-        console.error(error);
+        console.error("ERROR PEMBAYARAN:", error);
 
         alert(
-            error.message ||
-            "Terjadi kesalahan saat memproses transaksi."
+            error.message || "Terjadi kesalahan saat pembayaran."
         );
 
+        paymentInProgress = false;
+
+    } finally {
+        if (payButton) {
+            payButton.disabled = false;
+            payButton.textContent = "BAYAR & CETAK";
+        }
     }
 }
 
@@ -977,16 +771,12 @@ async function processPayment() {
 // ======================================================
 
 function holdTransaction() {
+    if (paymentInProgress) return;
 
     if (cart.length === 0) {
-
-        alert(
-            "Tidak ada transaksi untuk ditahan."
-        );
-
+        alert("Tidak ada transaksi untuk ditahan.");
         return;
     }
-
 
     alert(
         "Fitur tahan transaksi akan dibuat pada tahap berikutnya."
@@ -999,61 +789,50 @@ function holdTransaction() {
 // ======================================================
 
 function cancelTransaction() {
+    if (paymentInProgress) return;
 
-    const confirmation =
-        confirm(
-            "Apakah kamu yakin ingin membatalkan transaksi?"
-        );
+    const confirmation = confirm(
+        "Apakah kamu yakin ingin membatalkan transaksi?"
+    );
 
-
-    if (!confirmation) {
-        return;
-    }
-
+    if (!confirmation) return;
 
     cart = [];
 
-
     renderCart();
-
     calculateTotal();
-
     calculateChange();
 
-
-    const payment =
-        document.getElementById("payment");
-
+    const payment = document.getElementById("payment");
 
     if (payment) {
-
         payment.value = "";
-
+        payment.disabled = false;
     }
 
-
-    const searchInput =
-        document.getElementById("searchProduct");
-
-
-    const productResults =
-        document.getElementById("productResults");
-
+    const searchInput = document.getElementById("searchProduct");
+    const productResults = document.getElementById("productResults");
 
     if (searchInput) {
-
         searchInput.value = "";
-
     }
-
 
     if (productResults) {
-
         productResults.innerHTML = "";
-
         productResults.style.display = "none";
-
     }
+
+    // Kembalikan metode ke Tunai
+    selectedPaymentMethod = "Tunai";
+
+    document.querySelectorAll(".payment-method button")
+        .forEach(function(button) {
+            button.classList.remove("active");
+
+            if (button.textContent.trim() === "Tunai") {
+                button.classList.add("active");
+            }
+        });
 }
 
 
@@ -1062,22 +841,11 @@ function cancelTransaction() {
 // ======================================================
 
 function setCurrentDate() {
+    const currentDate = document.getElementById("currentDate");
 
-    const currentDate =
-        document.getElementById(
-            "currentDate"
-        );
+    if (!currentDate) return;
 
-
-    if (!currentDate) {
-        return;
-    }
-
-
-    currentDate.textContent =
-        new Date().toLocaleString(
-            "id-ID"
-        );
+    currentDate.textContent = new Date().toLocaleString("id-ID");
 }
 
 
@@ -1086,32 +854,16 @@ function setCurrentDate() {
 // ======================================================
 
 function setupSearch() {
+    const searchInput = document.getElementById("searchProduct");
 
-    const searchInput =
-        document.getElementById(
-            "searchProduct"
-        );
+    if (!searchInput) return;
 
-
-    if (!searchInput) {
-        return;
-    }
-
-
-    searchInput.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (event.key === "Enter") {
-
-                event.preventDefault();
-
-                doSearchProduct();
-
-            }
-
+    searchInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            doSearchProduct();
         }
-    );
+    });
 }
 
 
@@ -1120,48 +872,24 @@ function setupSearch() {
 // ======================================================
 
 function setupKeyboardShortcut() {
+    document.addEventListener("keydown", function(event) {
 
-    document.addEventListener(
-        "keydown",
-        function (event) {
+        if (event.key === "F2") {
+            event.preventDefault();
 
-            // F2 = pencarian
-            if (event.key === "F2") {
-
-                event.preventDefault();
-
-                document
-                    .getElementById(
-                        "searchProduct"
-                    )
-                    ?.focus();
-
-            }
-
-
-            // F4 = pembayaran
-            if (event.key === "F4") {
-
-                event.preventDefault();
-
-                document
-                    .getElementById(
-                        "payment"
-                    )
-                    ?.focus();
-
-            }
-
-
-            // ESC = batal
-            if (event.key === "Escape") {
-
-                cancelTransaction();
-
-            }
-
+            document.getElementById("searchProduct")?.focus();
         }
-    );
+
+        if (event.key === "F4") {
+            event.preventDefault();
+
+            document.getElementById("payment")?.focus();
+        }
+
+        if (event.key === "Escape") {
+            cancelTransaction();
+        }
+    });
 }
 
 
@@ -1170,26 +898,13 @@ function setupKeyboardShortcut() {
 // ======================================================
 
 function setupPaymentInput() {
+    const payment = document.getElementById("payment");
 
-    const payment =
-        document.getElementById(
-            "payment"
-        );
+    if (!payment) return;
 
-
-    if (!payment) {
-        return;
-    }
-
-
-    payment.addEventListener(
-        "input",
-        function () {
-
-            calculateChange();
-
-        }
-    );
+    payment.addEventListener("input", function() {
+        calculateChange();
+    });
 }
 
 
@@ -1198,42 +913,22 @@ function setupPaymentInput() {
 // ======================================================
 
 function setupCalculationInputs() {
-
     const fields = [
-
         "discountPercent",
-
         "discountAmount",
-
         "tax",
-
         "otherFee"
-
     ];
 
+    fields.forEach(function(id) {
+        const element = document.getElementById(id);
 
-    fields.forEach(function (id) {
+        if (!element) return;
 
-        const element =
-            document.getElementById(id);
-
-
-        if (!element) {
-            return;
-        }
-
-
-        element.addEventListener(
-            "input",
-            function () {
-
-                calculateTotal();
-
-                calculateChange();
-
-            }
-        );
-
+        element.addEventListener("input", function() {
+            calculateTotal();
+            calculateChange();
+        });
     });
 }
 
@@ -1242,30 +937,17 @@ function setupCalculationInputs() {
 // INITIAL
 // ======================================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("KASIR JS BERHASIL DIMUAT");
 
-        console.log(
-            "KASIR JS BERHASIL DIMUAT"
-        );
+    setCurrentDate();
 
+    setupSearch();
+    setupKeyboardShortcut();
+    setupPaymentInput();
+    setupCalculationInputs();
 
-        setCurrentDate();
-
-        setupSearch();
-
-        setupKeyboardShortcut();
-
-        setupPaymentInput();
-
-        setupCalculationInputs();
-
-        renderCart();
-
-        calculateTotal();
-
-        calculateChange();
-
-    }
-);
+    renderCart();
+    calculateTotal();
+    calculateChange();
+});

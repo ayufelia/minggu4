@@ -12,6 +12,7 @@
         "laravel/framework": "^13.17",
         "laravel/reverb": "^1.12",
         "laravel/tinker": "^3.0",
+        "midtrans/midtrans-php": "^2.6",
         "mike42/escpos-php": "^5.0"
     },
     "require-dev": {
